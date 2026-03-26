@@ -142,7 +142,7 @@ function durHrs(mins){return(mins/60).toFixed(1)}
 const K="time-audit-v2";
 function ld(){try{return JSON.parse(localStorage.getItem(K))||null}catch{return null}}
 function sv(d){localStorage.setItem(K,JSON.stringify(d))}
-function todayStr(){return new Date().toISOString().split("T")[0]}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function fd(d){return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
 function addDays(d,n){const dt=new Date(d+"T00:00:00");dt.setDate(dt.getDate()+n);return dt.toISOString().split("T")[0]}
 
@@ -157,7 +157,7 @@ let editIdx=null; // index of entry being edited, null=new
 const $=document.getElementById("app");
 
 function initAudit(){
-  const start=todayStr();
+  const start="2026-03-26";
   const days=[];
   for(let i=0;i<7;i++)days.push({date:addDays(start,i),entries:[]});
   data={start,days};sv(data);
@@ -186,7 +186,7 @@ function rH(){
 
   // Progress
   const totalMins=data.days.reduce((s,d)=>s+dayLogged(d),0);
-  const totalPossible=data.days.filter(d=>d.date<=todayStr()).length*1440;
+  const totalPossible=data.days.length*1440;
   const pct=totalPossible>0?Math.round(totalMins/totalPossible*100):0;
   const today_=todayStr();
   const dayIdx=data.days.findIndex(d=>d.date===today_);
@@ -213,12 +213,10 @@ function rH(){
   data.days.forEach(d=>{
     const dn=dayNum(d.date);
     const isToday=d.date===today_;
-    const isPast=d.date<today_;
     const logged=dayLogged(d);
-    const maxM=isToday?nowMins():(isPast?1440:0);
-    const pct_=maxM>0?Math.min(Math.round(logged/maxM*100),100):0;
-    const isFuture=d.date>today_;
-    h+=`<div class="dc${isToday?' today':''}${isFuture?' style="opacity:.5"':''}" onclick="${isFuture?'':`curDay='${d.date}';resetForm();view='day';R()`}">
+    const maxM=1440;
+    const pct_=Math.min(Math.round(logged/maxM*100),100);
+    h+=`<div class="dc${isToday?' today':''}" onclick="curDay='${d.date}';resetForm();view='day';R()">
       <div class="dc-l"><div class="dc-num">D${dn}</div><div>
         <div class="dc-dt">${fd(d.date)}${isToday?' (today)':''}</div>
         <div class="dc-m">${durStr(logged)} logged${d.entries.length?' \u{00B7} '+d.entries.length+' entries':''}</div>
