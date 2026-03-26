@@ -133,7 +133,7 @@ function gC(id){return CATS.find(c=>c.id===id)}
 
 // Time helpers
 const SLOTS=[];
-for(let h=0;h<24;h++)for(let m=0;m<60;m+=30)SLOTS.push(h*60+m);
+for(let h=0;h<24;h++)for(let m=0;m<60;m+=15)SLOTS.push(h*60+m);
 function mToStr(mins){const h=Math.floor(mins/60),m=mins%60;const ampm=h>=12?'pm':'am';const h12=h===0?12:h>12?h-12:h;return h12+':'+(m<10?'0':'')+m+ampm}
 function mToStr24(mins){const h=Math.floor(mins/60),m=mins%60;return(h<10?'0':'')+h+':'+(m<10?'0':'')+m}
 function durStr(mins){const h=Math.floor(mins/60),m=mins%60;if(h===0)return m+'min';if(m===0)return h+'h';return h+'h '+m+'min'}
@@ -144,7 +144,7 @@ function ld(){try{return JSON.parse(localStorage.getItem(K))||null}catch{return 
 function sv(d){localStorage.setItem(K,JSON.stringify(d))}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function fd(d){return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
-function addDays(d,n){const dt=new Date(d+"T00:00:00");dt.setDate(dt.getDate()+n);return dt.toISOString().split("T")[0]}
+function addDays(d,n){const dt=new Date(d+"T00:00:00");dt.setDate(dt.getDate()+n);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')}
 
 // State
 let data=ld();
@@ -165,7 +165,7 @@ function initAudit(){
 function getDay(d){return data?data.days.find(x=>x.date===d):null}
 function dayNum(d){return data?data.days.findIndex(x=>x.date===d)+1:0}
 function dayLogged(day){return day.entries.reduce((s,e)=>s+e.end-e.start,0)}
-function nowMins(){const d=new Date();return d.getHours()*60+Math.floor(d.getMinutes()/30)*30}
+function nowMins(){const d=new Date();return d.getHours()*60+Math.floor(d.getMinutes()/15)*15}
 
 function resetForm(){adding=false;formCat=null;formStart=null;formEnd=null;formEnergy=null;formPlanned=null;formNote="";editIdx=null}
 
@@ -176,7 +176,7 @@ function R(){
 
 // ===== HOME =====
 function rH(){
-  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>7-Day Time Audit</h1><p>Track where your time actually goes</p></div>`;
+  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>7-Day Time Audit</h1><p>Track where your time actually goes</p><p style="font-size:11px;color:var(--dim);margin-top:6px">v1.2</p></div>`;
   if(!data){
     h+=`<div class="card"><p style="font-size:14px;color:var(--txt);margin-bottom:12px">Log your activities for 7 days using start/end times. Check in 3-4 times a day. At the end, we review the real picture together.</p>
       <p style="font-size:13px;color:var(--mut);margin-bottom:16px">Be honest, not aspirational.</p>
@@ -339,7 +339,7 @@ function rPicker(){
         <div class="picker-col">
           <span class="picker-col-label">Min</span>
           <div class="scroll-wrap" id="scrM">`;
-  for(let m=0;m<60;m+=30){
+  for(let m=0;m<60;m+=15){
     h+=`<div class="scroll-item${curM===m?' on':''}" onclick="pickM(${m})">${m<10?'0':''}${m}</div>`;
   }
   h+=`</div></div></div>
@@ -352,7 +352,7 @@ function rPicker(){
     const sh=document.getElementById('scrH');
     if(sh)sh.scrollTop=curH*50-50;
     const sm=document.getElementById('scrM');
-    if(sm)sm.scrollTop=(curM/30)*50;
+    if(sm)sm.scrollTop=(curM/15)*50;
   },50);
 }
 
