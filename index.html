@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Time Audit</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Time Audit">
+<meta name="theme-color" content="#0f1117">
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--card-h:#22263a;--bdr:#2a2e3e;--acc:#e8a838;--acc-s:rgba(232,168,56,.12);--grn:#34d399;--grn-s:rgba(52,211,153,.12);--red:#f87171;--txt:#e8e9ed;--mut:#8b8fa3;--dim:#5c6078;--wht:#fff;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;padding-top:var(--st);padding-bottom:var(--sb);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+#app{max-width:480px;margin:0 auto;padding:0 16px 40px}
+button{font-family:inherit;cursor:pointer;-webkit-appearance:none}input,select,textarea{font-family:inherit}
+
+.btn{width:100%;border:none;border-radius:12px;font-size:15px;font-weight:700;padding:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-a{background:var(--acc);color:#1a1d27}.btn-a:disabled{opacity:.4}
+.btn-o{background:transparent;color:var(--acc);border:1.5px solid var(--acc);font-weight:600;font-size:14px;margin-top:10px}
+.btn-d{background:transparent;color:var(--mut);border:1px dashed var(--bdr);font-size:14px;font-weight:500;margin-top:8px;padding:12px}
+.btn-sm{padding:8px 14px;background:var(--acc-s);color:var(--acc);border:1px solid var(--acc);border-radius:8px;font-size:13px;font-weight:600;width:auto}
+.btn-smm{padding:8px 14px;background:transparent;color:var(--mut);border:1px solid var(--bdr);border-radius:8px;font-size:13px;font-weight:500;width:auto}
+
+.hdr{text-align:center;padding:28px 0 20px}.hdr-ic{font-size:40px;margin-bottom:6px}
+.hdr h1{font-size:24px;font-weight:700;color:var(--wht);letter-spacing:-.5px}
+.hdr p{font-size:13px;color:var(--mut);margin-top:3px}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0 10px;position:sticky;top:0;background:var(--bg);z-index:10}
+.nav .bk{background:transparent;border:none;color:var(--acc);font-size:15px;font-weight:600;padding:8px 0}
+.nav-t{font-size:16px;font-weight:700;color:var(--wht)}
+.sec{margin-top:24px}.sec-t{font-size:13px;font-weight:600;color:var(--mut);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.card{background:var(--card);border-radius:12px;border:1px solid var(--bdr);padding:16px;margin-bottom:10px}
+.fld{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-size:14px;outline:none}
+.lbl{display:block;font-size:11px;color:var(--mut);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+textarea{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-size:14px;resize:vertical;outline:none;line-height:1.5}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+
+/* Day cards */
+.dc{display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:12px;padding:13px 16px;margin-bottom:8px;cursor:pointer;border:1px solid var(--bdr)}
+.dc:active{background:var(--card-h)}.dc.today{border-color:var(--acc)}
+.dc-l{display:flex;align-items:center;gap:12px}
+.dc-num{background:var(--acc-s);color:var(--acc);padding:6px 10px;border-radius:8px;font-size:13px;font-weight:700;min-width:36px;text-align:center}
+.dc-dt{font-size:14px;font-weight:600}.dc-m{font-size:12px;color:var(--mut);margin-top:2px}
+.dc-bar{width:60px;height:6px;background:var(--bdr);border-radius:3px;overflow:hidden}
+.dc-fill{height:100%;background:var(--acc);border-radius:3px}
+
+/* Entry cards */
+.entry{background:var(--card);border-radius:10px;border:1px solid var(--bdr);margin-bottom:6px;overflow:hidden}
+.entry-top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px}
+.entry-time{font-size:14px;font-weight:700;color:var(--wht)}
+.entry-dur{font-size:12px;color:var(--dim);margin-left:8px;font-weight:400}
+.entry-cat{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.entry-meta{display:flex;align-items:center;gap:8px}
+.entry-energy{font-size:12px;color:var(--dim)}
+.entry-del{background:transparent;border:none;color:var(--dim);font-size:16px;padding:4px 0 4px 8px}
+
+/* Category tags */
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.cat{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--bdr);background:var(--bg);color:var(--mut);cursor:pointer;transition:all .15s}
+.cat.on{border-color:var(--acc);background:var(--acc-s);color:var(--acc)}
+
+/* Energy */
+.eng{display:flex;gap:6px;margin:8px 0}
+.eng-b{width:36px;height:36px;border-radius:8px;border:1px solid var(--bdr);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--mut)}
+.eng-b.on{border-color:var(--acc);background:var(--acc-s);color:var(--acc)}
+
+/* Planned toggle */
+.ptog{display:flex;gap:6px;margin:8px 0}
+.ptog button{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--bdr);background:var(--bg);color:var(--mut)}
+.ptog button.on{border-color:var(--acc);background:var(--acc-s);color:var(--acc)}
+
+/* Scroll picker overlay */
+.picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.picker-sheet{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px 16px calc(20px + var(--sb))}
+.picker-sheet h3{font-size:16px;font-weight:700;color:var(--wht);margin-bottom:16px;text-align:center}
+.picker-row{display:flex;gap:12px;justify-content:center;margin-bottom:20px}
+.picker-col{display:flex;flex-direction:column;align-items:center}
+.picker-col-label{font-size:11px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.scroll-wrap{height:150px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--bdr);background:var(--bg);width:80px;scroll-snap-type:y mandatory;scrollbar-width:none}
+.scroll-wrap::-webkit-scrollbar{display:none}
+.scroll-item{height:50px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--dim);scroll-snap-align:center;cursor:pointer;transition:color .15s}
+.scroll-item.on{color:var(--acc);background:var(--acc-s)}
+
+/* New entry form */
+.form-card{background:var(--card);border-radius:12px;border:1px solid var(--acc);padding:16px;margin-bottom:12px}
+.form-card h3{font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px}
+.time-btn{padding:12px 20px;background:var(--bg);border:1px solid var(--bdr);border-radius:10px;font-size:18px;font-weight:700;color:var(--wht);text-align:center;cursor:pointer;min-width:100px}
+.time-btn:active{background:var(--card-h)}
+.time-row{display:flex;align-items:center;gap:12px;justify-content:center;margin:12px 0}
+.time-arrow{color:var(--acc);font-size:20px;font-weight:700}
+
+/* Summary */
+.sbar{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sbar-label{font-size:13px;font-weight:600;min-width:80px}
+.sbar-track{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:4px}
+.sbar-val{font-size:13px;font-weight:700;min-width:55px;text-align:right}
+.srow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px}.srow:last-child{border-bottom:none}
+
+.ei-card{background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--bdr);margin-top:12px}
+.ei-card h3{font-size:14px;font-weight:600;color:var(--mut);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.ei-row{display:flex;gap:8px;margin-top:8px}
+
+/* Progress bar */
+.prog-wrap{padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--bdr);margin-bottom:12px}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.prog-top h2{font-size:18px;font-weight:700;color:var(--wht)}
+.prog-top span{font-size:28px;font-weight:800;color:var(--acc)}
+.prog-bar{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--acc);border-radius:4px;transition:width .3s}
+.prog-sub{font-size:12px;color:var(--mut);margin-top:6px}
+
+.gap-warn{padding:10px 14px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:10px;font-size:13px;color:var(--red);margin-bottom:8px}
+.timeline-cat{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-right:4px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const CATS=[
+  {id:"work",label:"Work",emoji:"\u{1F4BC}",color:"#60a5fa"},
+  {id:"family",label:"Family",emoji:"\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}",color:"#f472b6"},
+  {id:"health",label:"Health",emoji:"\u{1F4AA}",color:"#34d399"},
+  {id:"rest",label:"Rest",emoji:"\u{1F6CB}",color:"#a78bfa"},
+  {id:"commute",label:"Commute",emoji:"\u{1F697}",color:"#fb923c"},
+  {id:"chores",label:"Chores",emoji:"\u{1F3E0}",color:"#fbbf24"},
+  {id:"fun",label:"Fun",emoji:"\u{1F3B8}",color:"#22d3ee"},
+  {id:"sleep",label:"Sleep",emoji:"\u{1F634}",color:"#6366f1"},
+  {id:"personal",label:"Personal",emoji:"\u{1F4F1}",color:"#94a3b8"},
+];
+function gC(id){return CATS.find(c=>c.id===id)}
+
+// Time helpers
+const SLOTS=[];
+for(let h=0;h<24;h++)for(let m=0;m<60;m+=30)SLOTS.push(h*60+m);
+function mToStr(mins){const h=Math.floor(mins/60),m=mins%60;const ampm=h>=12?'pm':'am';const h12=h===0?12:h>12?h-12:h;return h12+':'+(m<10?'0':'')+m+ampm}
+function mToStr24(mins){const h=Math.floor(mins/60),m=mins%60;return(h<10?'0':'')+h+':'+(m<10?'0':'')+m}
+function durStr(mins){const h=Math.floor(mins/60),m=mins%60;if(h===0)return m+'min';if(m===0)return h+'h';return h+'h '+m+'min'}
+function durHrs(mins){return(mins/60).toFixed(1)}
+
+const K="time-audit-v2";
+function ld(){try{return JSON.parse(localStorage.getItem(K))||null}catch{return null}}
+function sv(d){localStorage.setItem(K,JSON.stringify(d))}
+function todayStr(){return new Date().toISOString().split("T")[0]}
+function fd(d){return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+function addDays(d,n){const dt=new Date(d+"T00:00:00");dt.setDate(dt.getDate()+n);return dt.toISOString().split("T")[0]}
+
+// State
+let data=ld();
+let view="home",curDay=null;
+let adding=false; // whether new entry form is open
+let formCat=null,formStart=null,formEnd=null,formEnergy=null,formPlanned=null,formNote="";
+let pickerTarget=null; // 'start'|'end'|null
+let editIdx=null; // index of entry being edited, null=new
+
+const $=document.getElementById("app");
+
+function initAudit(){
+  const start=todayStr();
+  const days=[];
+  for(let i=0;i<7;i++)days.push({date:addDays(start,i),entries:[]});
+  data={start,days};sv(data);
+}
+function getDay(d){return data?data.days.find(x=>x.date===d):null}
+function dayNum(d){return data?data.days.findIndex(x=>x.date===d)+1:0}
+function dayLogged(day){return day.entries.reduce((s,e)=>s+e.end-e.start,0)}
+function nowMins(){const d=new Date();return d.getHours()*60+Math.floor(d.getMinutes()/30)*30}
+
+function resetForm(){adding=false;formCat=null;formStart=null;formEnd=null;formEnergy=null;formPlanned=null;formNote="";editIdx=null}
+
+function R(){
+  if(pickerTarget)return rPicker();
+  ({home:rH,day:rD,summary:rS})[view]();
+}
+
+// ===== HOME =====
+function rH(){
+  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>7-Day Time Audit</h1><p>Track where your time actually goes</p></div>`;
+  if(!data){
+    h+=`<div class="card"><p style="font-size:14px;color:var(--txt);margin-bottom:12px">Log your activities for 7 days using start/end times. Check in 3-4 times a day. At the end, we review the real picture together.</p>
+      <p style="font-size:13px;color:var(--mut);margin-bottom:16px">Be honest, not aspirational.</p>
+      <button class="btn btn-a" onclick="initAudit();R()">Start My Audit</button></div>`;
+    $.innerHTML=h;return;
+  }
+
+  // Progress
+  const totalMins=data.days.reduce((s,d)=>s+dayLogged(d),0);
+  const totalPossible=data.days.filter(d=>d.date<=todayStr()).length*1440;
+  const pct=totalPossible>0?Math.round(totalMins/totalPossible*100):0;
+  const today_=todayStr();
+  const dayIdx=data.days.findIndex(d=>d.date===today_);
+  const auditDay=dayIdx>=0?dayIdx+1:"-";
+  const endDate=data.days[data.days.length-1].date;
+  const isFinished=today_>endDate;
+
+  h+=`<div class="prog-wrap"><div class="prog-top"><h2>Day ${auditDay} of 7</h2><span>${pct}%</span></div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="prog-sub">${durStr(totalMins)} logged of ${durStr(totalPossible)} elapsed. Ends ${fd(endDate)}.</div></div>`;
+
+  // Today shortcut
+  const todayDay=getDay(today_);
+  if(todayDay){
+    const logged=dayLogged(todayDay);
+    const elapsed=Math.min(nowMins(),1440);
+    const gap=elapsed-logged;
+    if(gap>30)h+=`<button class="btn btn-a" onclick="curDay='${today_}';resetForm();view='day';R()">\u{270F}\u{FE0F} Log now (~${durStr(gap)} unlogged)</button>`;
+    else h+=`<button class="btn btn-o" onclick="curDay='${today_}';resetForm();view='day';R()">\u{2713} Today mostly logged. Review?</button>`;
+  }
+
+  // Days
+  h+=`<div class="sec"><h2 class="sec-t">Days</h2>`;
+  data.days.forEach(d=>{
+    const dn=dayNum(d.date);
+    const isToday=d.date===today_;
+    const isPast=d.date<today_;
+    const logged=dayLogged(d);
+    const maxM=isToday?nowMins():(isPast?1440:0);
+    const pct_=maxM>0?Math.min(Math.round(logged/maxM*100),100):0;
+    const isFuture=d.date>today_;
+    h+=`<div class="dc${isToday?' today':''}${isFuture?' style="opacity:.5"':''}" onclick="${isFuture?'':`curDay='${d.date}';resetForm();view='day';R()`}">
+      <div class="dc-l"><div class="dc-num">D${dn}</div><div>
+        <div class="dc-dt">${fd(d.date)}${isToday?' (today)':''}</div>
+        <div class="dc-m">${durStr(logged)} logged${d.entries.length?' \u{00B7} '+d.entries.length+' entries':''}</div>
+      </div></div>
+      <div class="dc-bar"><div class="dc-fill" style="width:${pct_}%"></div></div>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  if(totalMins>=2880||isFinished)h+=`<button class="btn btn-o" onclick="view='summary';R()">\u{1F4CA} View Summary</button>`;
+
+  h+=`<div class="ei-card"><h3>Data</h3><div class="ei-row">
+    <button class="btn-sm" onclick="doExp()">\u{1F4E4} Export</button>
+    <label class="btn-smm" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">\u{1F4E5} Import<input type="file" accept=".json" style="display:none" onchange="doImp(event)"></label>
+    <button class="btn-smm" onclick="doReset()">\u{1F5D1} Reset</button>
+  </div></div>`;
+  $.innerHTML=h;
+}
+
+// ===== DAY =====
+function rD(){
+  const day=getDay(curDay);if(!day){view="home";return R()}
+  const dn=dayNum(curDay);
+  const sorted=[...day.entries].sort((a,b)=>a.start-b.start);
+  const logged=dayLogged(day);
+
+  let h=`<div class="nav"><button class="bk" onclick="view='home';resetForm();R()">\u{2190} Back</button><span class="nav-t">Day ${dn} \u{2022} ${fd(curDay)}</span><span style="width:40px"></span></div>`;
+
+  // Gaps detection
+  let gaps=[];
+  if(sorted.length>0){
+    if(sorted[0].start>0)gaps.push({s:0,e:sorted[0].start});
+    for(let i=1;i<sorted.length;i++){
+      if(sorted[i].start>sorted[i-1].end)gaps.push({s:sorted[i-1].end,e:sorted[i].start});
+    }
+  }
+  if(gaps.length>0){
+    const gapStr=gaps.map(g=>`${mToStr(g.s)}\u{2013}${mToStr(g.e)}`).join(', ');
+    h+=`<div class="gap-warn">\u{26A0} Gaps in timeline: ${gapStr}</div>`;
+  }
+
+  // Logged entries
+  if(sorted.length>0){
+    sorted.forEach((e,origIdx)=>{
+      const realIdx=day.entries.indexOf(e);
+      const cat=gC(e.cat);
+      const dur=e.end-e.start;
+      h+=`<div class="entry" style="border-left:3px solid ${cat?cat.color:'var(--bdr)'}">
+        <div class="entry-top">
+          <div><span class="entry-time">${mToStr(e.start)} \u{2013} ${mToStr(e.end)}</span><span class="entry-dur">${durStr(dur)}</span></div>
+          <div class="entry-meta">
+            <span class="entry-cat" style="color:${cat?cat.color:'var(--mut)'}">${cat?cat.emoji+' '+cat.label:'?'}</span>
+            ${e.energy?`<span class="entry-energy">\u{26A1}${e.energy}</span>`:''}
+            <span style="font-size:11px;color:${e.planned?'var(--grn)':'var(--red)'}">${e.planned===true?'P':e.planned===false?'U':''}</span>
+            <button class="entry-del" onclick="editEntry(${realIdx})">\u{270F}\u{FE0F}</button>
+            <button class="entry-del" onclick="delEntry(${realIdx})">\u{2717}</button>
+          </div>
+        </div>
+        ${e.note?`<div style="padding:0 14px 10px;font-size:12px;color:var(--dim)">${e.note}</div>`:''}
+      </div>`;
+    });
+  }
+
+  h+=`<div style="font-size:13px;color:var(--dim);text-align:center;padding:8px 0">${durStr(logged)} of 24h logged</div>`;
+
+  // Add / Edit form
+  if(adding){
+    const isEdit=editIdx!==null;
+    const lastEnd=sorted.length>0?sorted[sorted.length-1].end:0;
+    if(formStart===null)formStart=isEdit?0:lastEnd;
+    if(formEnd===null)formEnd=isEdit?0:Math.min(lastEnd+60,1440);
+
+    h+=`<div class="form-card"><h3>${isEdit?'Edit Entry':'New Entry'}</h3>
+      <label class="lbl">Time</label>
+      <div class="time-row">
+        <div class="time-btn" onclick="pickerTarget='start';R()">${mToStr(formStart)}</div>
+        <span class="time-arrow">\u{2192}</span>
+        <div class="time-btn" onclick="pickerTarget='end';R()">${mToStr(formEnd)}</div>
+        <span style="font-size:13px;color:var(--dim);margin-left:4px">${formEnd>formStart?durStr(formEnd-formStart):'invalid'}</span>
+      </div>
+      <label class="lbl">Category</label>
+      <div class="cats">${CATS.map(c=>`<span class="cat${formCat===c.id?' on':''}" style="${formCat===c.id?'border-color:'+c.color+';color:'+c.color+';background:'+c.color+'20':''}" onclick="formCat='${c.id}';R()">${c.emoji} ${c.label}</span>`).join('')}</div>
+      <label class="lbl mt8">Energy level</label>
+      <div class="eng">${[1,2,3,4,5].map(e=>`<button class="eng-b${formEnergy===e?' on':''}" onclick="formEnergy=${e};R()">${e}</button>`).join('')}
+        <span style="font-size:11px;color:var(--dim);align-self:center;margin-left:4px">1=drained 5=peak</span></div>
+      <label class="lbl mt8">Planned?</label>
+      <div class="ptog"><button class="${formPlanned===true?'on':''}" onclick="formPlanned=true;R()">\u{2713} Planned</button><button class="${formPlanned===false?'on':''}" onclick="formPlanned=false;R()">\u{2717} Unplanned</button></div>
+      <label class="lbl mt8">Note (optional)</label>
+      <input class="fld" id="formNote" value="${formNote}" placeholder="Brief description..." onblur="formNote=this.value">
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-smm" onclick="resetForm();R()">Cancel</button>
+        <button class="btn-sm" onclick="saveEntry()" ${!formCat||formEnd<=formStart?'disabled':''}>${isEdit?'Update':'Add Entry'}</button>
+      </div>
+    </div>`;
+  }else{
+    h+=`<button class="btn btn-a mt8" onclick="adding=true;editIdx=null;formCat=null;formEnergy=null;formPlanned=null;formNote='';formStart=null;formEnd=null;R()">+ Log Activity</button>`;
+  }
+
+  $.innerHTML=h;
+}
+
+// ===== SCROLL PICKER =====
+function rPicker(){
+  const curVal=pickerTarget==='start'?formStart:formEnd;
+  const curH=Math.floor(curVal/60);
+  const curM=curVal%60;
+
+  let h=`<div class="picker-overlay" onclick="if(event.target===this){pickerTarget=null;R()}">
+    <div class="picker-sheet">
+      <h3>Select ${pickerTarget==='start'?'Start':'End'} Time</h3>
+      <div class="picker-row">
+        <div class="picker-col">
+          <span class="picker-col-label">Hour</span>
+          <div class="scroll-wrap" id="scrH">`;
+  for(let i=0;i<24;i++){
+    const label=i===0?'12am':i<12?i+'am':i===12?'12pm':(i-12)+'pm';
+    h+=`<div class="scroll-item${curH===i?' on':''}" onclick="pickH(${i})">${label}</div>`;
+  }
+  h+=`</div></div>
+        <div class="picker-col">
+          <span class="picker-col-label">Min</span>
+          <div class="scroll-wrap" id="scrM">`;
+  for(let m=0;m<60;m+=30){
+    h+=`<div class="scroll-item${curM===m?' on':''}" onclick="pickM(${m})">${m<10?'0':''}${m}</div>`;
+  }
+  h+=`</div></div></div>
+      <button class="btn btn-a" onclick="pickerTarget=null;R()">Done</button>
+    </div></div>`;
+  $.innerHTML=h;
+
+  // Scroll to selected
+  setTimeout(()=>{
+    const sh=document.getElementById('scrH');
+    if(sh)sh.scrollTop=curH*50-50;
+    const sm=document.getElementById('scrM');
+    if(sm)sm.scrollTop=(curM/30)*50;
+  },50);
+}
+
+function pickH(h){
+  const m=pickerTarget==='start'?formStart%60:formEnd%60;
+  if(pickerTarget==='start')formStart=h*60+m;
+  else formEnd=h*60+m;
+  R();
+}
+function pickM(m){
+  const hh=pickerTarget==='start'?Math.floor(formStart/60):Math.floor(formEnd/60);
+  if(pickerTarget==='start')formStart=hh*60+m;
+  else formEnd=hh*60+m;
+  R();
+}
+
+// ===== SUMMARY =====
+function rS(){
+  if(!data){view="home";return R()}
+  const all=[];
+  data.days.forEach(d=>{d.entries.forEach(e=>{all.push({...e,date:d.date})})});
+  const totalMins=all.reduce((s,e)=>s+e.end-e.start,0);
+  if(totalMins===0){view="home";return R()}
+
+  let h=`<div class="nav"><button class="bk" onclick="view='home';R()">\u{2190} Back</button><span class="nav-t">Summary</span><span style="width:40px"></span></div>`;
+
+  // By category
+  h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:16px">\u{1F4CA} Time by Category</h3>`;
+  const byCat={};CATS.forEach(c=>{byCat[c.id]=all.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.end-e.start,0)});
+  const sortedCats=Object.entries(byCat).filter(([_,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const maxCat=sortedCats.length?sortedCats[0][1]:1;
+  sortedCats.forEach(([catId,mins])=>{
+    const cat=gC(catId);const pct=Math.round(mins/totalMins*100);
+    h+=`<div class="sbar"><span class="sbar-label">${cat.emoji} ${cat.label}</span><div class="sbar-track"><div class="sbar-fill" style="width:${mins/maxCat*100}%;background:${cat.color}"></div></div><span class="sbar-val">${durHrs(mins)}h (${pct}%)</span></div>`;
+  });
+  h+=`</div>`;
+
+  // Avg daily
+  const daysLogged=data.days.filter(d=>d.entries.length>0).length||1;
+  h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{1F4C5} Daily Averages</h3>`;
+  sortedCats.forEach(([catId,mins])=>{
+    const cat=gC(catId);const avg=mins/daysLogged;
+    h+=`<div class="srow"><span>${cat.emoji} ${cat.label}</span><span style="font-weight:600">${durStr(Math.round(avg))}/day</span></div>`;
+  });
+  h+=`</div>`;
+
+  // Energy by category
+  h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{26A1} Energy by Category</h3>`;
+  sortedCats.forEach(([catId])=>{
+    const cat=gC(catId);
+    const withEnergy=all.filter(e=>e.cat===catId&&e.energy);
+    if(!withEnergy.length)return;
+    const avg=(withEnergy.reduce((s,e)=>s+e.energy,0)/withEnergy.length).toFixed(1);
+    h+=`<div class="srow"><span>${cat.emoji} ${cat.label}</span><span style="color:${parseFloat(avg)>=3?'var(--grn)':'var(--red)'};">${avg}/5</span></div>`;
+  });
+  h+=`</div>`;
+
+  // Planned vs Unplanned
+  const plannedMins=all.filter(e=>e.planned===true).reduce((s,e)=>s+e.end-e.start,0);
+  const unplannedMins=all.filter(e=>e.planned===false).reduce((s,e)=>s+e.end-e.start,0);
+  const pP=totalMins>0?Math.round(plannedMins/totalMins*100):0;
+  const uP=totalMins>0?Math.round(unplannedMins/totalMins*100):0;
+  h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{1F3AF} Planned vs Unplanned</h3>
+    <div class="sbar"><span class="sbar-label" style="color:var(--grn)">Planned</span><div class="sbar-track"><div class="sbar-fill" style="width:${pP}%;background:var(--grn)"></div></div><span class="sbar-val">${durHrs(plannedMins)}h (${pP}%)</span></div>
+    <div class="sbar"><span class="sbar-label" style="color:var(--red)">Unplanned</span><div class="sbar-track"><div class="sbar-fill" style="width:${uP}%;background:var(--red)"></div></div><span class="sbar-val">${durHrs(unplannedMins)}h (${uP}%)</span></div>
+  </div>`;
+
+  // Energy by time of day
+  h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{1F4C8} Energy by Time of Day</h3>`;
+  const blocks=[{l:"Early morning (5-8am)",s:300,e:480},{l:"Morning (8-12pm)",s:480,e:720},{l:"Afternoon (12-5pm)",s:720,e:1020},{l:"Evening (5-9pm)",s:1020,e:1260},{l:"Night (9pm-12am)",s:1260,e:1440}];
+  blocks.forEach(b=>{
+    const inBlock=all.filter(e=>e.energy&&e.start<b.e&&e.end>b.s);
+    if(!inBlock.length)return;
+    const avg=(inBlock.reduce((s,e)=>s+e.energy,0)/inBlock.length).toFixed(1);
+    h+=`<div class="srow"><span>${b.l}</span><span style="color:${parseFloat(avg)>=3?'var(--grn)':'var(--red)'}">${avg}/5</span></div>`;
+  });
+  h+=`</div>`;
+
+  // Key numbers
+  const funMins=byCat.fun||0;const healthMins=byCat.health||0;const workMins=byCat.work||0;
+  const allWithEnergy=all.filter(e=>e.energy);
+  const avgEnergy=allWithEnergy.length?(allWithEnergy.reduce((s,e)=>s+e.energy,0)/allWithEnergy.length).toFixed(1):'--';
+  h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{1F50D} Key Numbers</h3>
+    <div class="srow"><span>Fun time (total)</span><span style="font-weight:700;color:${funMins>=420?'var(--grn)':'var(--red)'}">${durHrs(funMins)}h</span></div>
+    <div class="srow"><span>Health time (total)</span><span style="font-weight:700">${durHrs(healthMins)}h</span></div>
+    <div class="srow"><span>Work time (total)</span><span style="font-weight:700">${durHrs(workMins)}h</span></div>
+    <div class="srow"><span>Fun per day (avg)</span><span style="font-weight:700;color:${funMins/daysLogged>=60?'var(--grn)':'var(--red)'}">${durStr(Math.round(funMins/daysLogged))}</span></div>
+    <div class="srow"><span>Overall avg energy</span><span style="font-weight:700">${avgEnergy}/5</span></div>
+  </div>`;
+
+  h+=`<div style="padding:14px 16px;background:var(--acc-s);border-radius:10px;font-size:13px;color:var(--acc);line-height:1.6;margin-top:8px"><strong>Next step:</strong> Export this data and share it in our conversation. We'll go through the real picture together.</div>`;
+  $.innerHTML=h;
+}
+
+// ===== ACTIONS =====
+function saveEntry(){
+  const noteEl=document.getElementById('formNote');
+  if(noteEl)formNote=noteEl.value;
+  if(!formCat||formEnd<=formStart)return;
+  const day=getDay(curDay);if(!day)return;
+  const entry={start:formStart,end:formEnd,cat:formCat,energy:formEnergy,planned:formPlanned,note:formNote};
+  if(editIdx!==null){day.entries[editIdx]=entry}
+  else{day.entries.push(entry)}
+  sv(data);resetForm();R();
+}
+function delEntry(idx){
+  const day=getDay(curDay);if(!day)return;
+  if(!confirm("Delete this entry?"))return;
+  day.entries.splice(idx,1);sv(data);R();
+}
+function editEntry(idx){
+  const day=getDay(curDay);if(!day)return;
+  const e=day.entries[idx];
+  editIdx=idx;adding=true;
+  formStart=e.start;formEnd=e.end;formCat=e.cat;formEnergy=e.energy;formPlanned=e.planned;formNote=e.note||"";
+  R();
+}
+
+function doExp(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='time-audit-'+todayStr()+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function doImp(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(!d.days){alert("Invalid file.");return}
+    if(!confirm("Import data? Replaces current."))return;data=d;sv(data);alert("Imported!");R()}catch{alert("Could not read file.")}};
+  reader.readAsText(file);
+}
+function doReset(){if(!confirm("Reset all data? Cannot be undone."))return;localStorage.removeItem(K);data=null;view="home";R()}
+
+R();
+</script>
+</body>
+</html>
