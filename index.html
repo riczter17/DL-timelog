@@ -134,7 +134,7 @@ function gC(id){return CATS.find(c=>c.id===id)}
 // Time helpers
 const SLOTS=[];
 for(let h=0;h<24;h++)for(let m=0;m<60;m+=15)SLOTS.push(h*60+m);
-function mToStr(mins){const h=Math.floor(mins/60),m=mins%60;const ampm=h>=12?'pm':'am';const h12=h===0?12:h>12?h-12:h;return h12+':'+(m<10?'0':'')+m+ampm}
+function mToStr(mins){if(mins>=1440)return'12:00am';const h=Math.floor(mins/60),m=mins%60;const ampm=h>=12?'pm':'am';const h12=h===0?12:h>12?h-12:h;return h12+':'+(m<10?'0':'')+m+ampm}
 function mToStr24(mins){const h=Math.floor(mins/60),m=mins%60;return(h<10?'0':'')+h+':'+(m<10?'0':'')+m}
 function durStr(mins){const h=Math.floor(mins/60),m=mins%60;if(h===0)return m+'min';if(m===0)return h+'h';return h+'h '+m+'min'}
 function durHrs(mins){return(mins/60).toFixed(1)}
@@ -176,7 +176,7 @@ function R(){
 
 // ===== HOME =====
 function rH(){
-  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>7-Day Time Audit</h1><p>Track where your time actually goes</p><p style="font-size:11px;color:var(--dim);margin-top:6px">v1.2</p></div>`;
+  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>7-Day Time Audit</h1><p>Track where your time actually goes</p><p style="font-size:11px;color:var(--dim);margin-top:6px">v1.3</p></div>`;
   if(!data){
     h+=`<div class="card"><p style="font-size:14px;color:var(--txt);margin-bottom:12px">Log your activities for 7 days using start/end times. Check in 3-4 times a day. At the end, we review the real picture together.</p>
       <p style="font-size:13px;color:var(--mut);margin-bottom:16px">Be honest, not aspirational.</p>
@@ -335,6 +335,9 @@ function rPicker(){
     const label=i===0?'12am':i<12?i+'am':i===12?'12pm':(i-12)+'pm';
     h+=`<div class="scroll-item${curH===i?' on':''}" onclick="pickH(${i})">${label}</div>`;
   }
+  if(pickerTarget==='end'){
+    h+=`<div class="scroll-item${curH===24?' on':''}" onclick="pickH(24)">12am (end)</div>`;
+  }
   h+=`</div></div>
         <div class="picker-col">
           <span class="picker-col-label">Min</span>
@@ -357,13 +360,16 @@ function rPicker(){
 }
 
 function pickH(h){
+  if(h===24){formEnd=1440;R();return}
   const m=pickerTarget==='start'?formStart%60:formEnd%60;
   if(pickerTarget==='start')formStart=h*60+m;
   else formEnd=h*60+m;
   R();
 }
 function pickM(m){
-  const hh=pickerTarget==='start'?Math.floor(formStart/60):Math.floor(formEnd/60);
+  const curVal=pickerTarget==='start'?formStart:formEnd;
+  if(Math.floor(curVal/60)===24)return;
+  const hh=Math.floor(curVal/60);
   if(pickerTarget==='start')formStart=hh*60+m;
   else formEnd=hh*60+m;
   R();
