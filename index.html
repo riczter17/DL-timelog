@@ -149,17 +149,38 @@ function addDays(d,n){const dt=new Date(d+"T00:00:00");dt.setDate(dt.getDate()+n
 // State
 let data=ld();
 let view="home",curDay=null;
-let adding=false; // whether new entry form is open
+let adding=false;
 let formCat=null,formStart=null,formEnd=null,formEnergy=null,formPlanned=null,formNote="";
-let pickerTarget=null; // 'start'|'end'|null
-let editIdx=null; // index of entry being edited, null=new
+let pickerTarget=null;
+let editIdx=null;
 
 const $=document.getElementById("app");
+
+// Extend existing data to 18 days (26 Mar - 12 Apr)
+if(data&&data.days){
+  const TARGET_DAYS=18;
+  const startDate=data.start||data.days[0].date;
+  while(data.days.length<TARGET_DAYS){
+    const nextDate=addDays(startDate,data.days.length);
+    data.days.push({date:nextDate,entries:[],dayType:null});
+  }
+  data.days.forEach(d=>{if(d.dayType===undefined)d.dayType=null});
+  sv(data);
+}
+
+const DAY_TYPES=[
+  {id:"wio",label:"WIO",color:"#60a5fa"},
+  {id:"wfh",label:"WFH",color:"#34d399"},
+  {id:"offsite",label:"Off-site",color:"#fb923c"},
+  {id:"leave",label:"Leave",color:"#a78bfa"},
+  {id:"weekend",label:"Weekend",color:"#f472b6"},
+];
+function gDT(id){return DAY_TYPES.find(t=>t.id===id)}
 
 function initAudit(){
   const start="2026-03-26";
   const days=[];
-  for(let i=0;i<7;i++)days.push({date:addDays(start,i),entries:[]});
+  for(let i=0;i<18;i++)days.push({date:addDays(start,i),entries:[],dayType:null});
   data={start,days};sv(data);
 }
 function getDay(d){return data?data.days.find(x=>x.date===d):null}
@@ -176,9 +197,9 @@ function R(){
 
 // ===== HOME =====
 function rH(){
-  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>7-Day Time Audit</h1><p>Track where your time actually goes</p><p style="font-size:11px;color:var(--dim);margin-top:6px">v1.3</p></div>`;
+  let h=`<div class="hdr"><div class="hdr-ic">\u{1F550}</div><h1>Time Audit</h1><p>Track where your time actually goes</p><p style="font-size:11px;color:var(--dim);margin-top:6px">v1.5</p></div>`;
   if(!data){
-    h+=`<div class="card"><p style="font-size:14px;color:var(--txt);margin-bottom:12px">Log your activities for 7 days using start/end times. Check in 3-4 times a day. At the end, we review the real picture together.</p>
+    h+=`<div class="card"><p style="font-size:14px;color:var(--txt);margin-bottom:12px">Log your activities using start/end times. Check in 3-4 times a day. At the end, we review the real picture together.</p>
       <p style="font-size:13px;color:var(--mut);margin-bottom:16px">Be honest, not aspirational.</p>
       <button class="btn btn-a" onclick="initAudit();R()">Start My Audit</button></div>`;
     $.innerHTML=h;return;
@@ -186,17 +207,18 @@ function rH(){
 
   // Progress
   const totalMins=data.days.reduce((s,d)=>s+dayLogged(d),0);
-  const totalPossible=data.days.length*1440;
-  const pct=totalPossible>0?Math.round(totalMins/totalPossible*100):0;
+  const daysWithEntries=data.days.filter(d=>d.entries.length>0).length;
+  const totalDays=data.days.length;
+  const pct=totalDays>0?Math.round(daysWithEntries/totalDays*100):0;
   const today_=todayStr();
   const dayIdx=data.days.findIndex(d=>d.date===today_);
   const auditDay=dayIdx>=0?dayIdx+1:"-";
   const endDate=data.days[data.days.length-1].date;
   const isFinished=today_>endDate;
 
-  h+=`<div class="prog-wrap"><div class="prog-top"><h2>Day ${auditDay} of 7</h2><span>${pct}%</span></div>
+  h+=`<div class="prog-wrap"><div class="prog-top"><h2>Day ${auditDay} of ${totalDays}</h2><span>${daysWithEntries}/${totalDays}</span></div>
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-    <div class="prog-sub">${durStr(totalMins)} logged of ${durStr(totalPossible)} elapsed. Ends ${fd(endDate)}.</div></div>`;
+    <div class="prog-sub">${daysWithEntries} days logged (${durStr(totalMins)} total). Ends ${fd(endDate)}.</div></div>`;
 
   // Today shortcut
   const todayDay=getDay(today_);
@@ -216,17 +238,19 @@ function rH(){
     const logged=dayLogged(d);
     const maxM=1440;
     const pct_=Math.min(Math.round(logged/maxM*100),100);
-    h+=`<div class="dc${isToday?' today':''}" onclick="curDay='${d.date}';resetForm();view='day';R()">
+    const isEmpty=d.entries.length===0;
+    const dtTag=d.dayType?gDT(d.dayType):null;
+    h+=`<div class="dc${isToday?' today':''}" style="${isEmpty&&!isToday?'opacity:.5':''}" onclick="curDay='${d.date}';resetForm();view='day';R()">
       <div class="dc-l"><div class="dc-num">D${dn}</div><div>
-        <div class="dc-dt">${fd(d.date)}${isToday?' (today)':''}</div>
-        <div class="dc-m">${durStr(logged)} logged${d.entries.length?' \u{00B7} '+d.entries.length+' entries':''}</div>
+        <div class="dc-dt">${fd(d.date)}${isToday?' (today)':''}${dtTag?' <span style="font-size:11px;font-weight:600;color:'+dtTag.color+';margin-left:6px">'+dtTag.label+'</span>':''}</div>
+        <div class="dc-m">${isEmpty?'No entries':durStr(logged)+' logged \u{00B7} '+d.entries.length+' entries'}</div>
       </div></div>
-      <div class="dc-bar"><div class="dc-fill" style="width:${pct_}%"></div></div>
+      ${isEmpty?'':'<div class="dc-bar"><div class="dc-fill" style="width:'+pct_+'%"></div></div>'}
     </div>`;
   });
   h+=`</div>`;
 
-  if(totalMins>=2880||isFinished)h+=`<button class="btn btn-o" onclick="view='summary';R()">\u{1F4CA} View Summary</button>`;
+  if(daysWithEntries>=2||isFinished)h+=`<button class="btn btn-o" onclick="view='summary';R()">\u{1F4CA} View Summary</button>`;
 
   h+=`<div class="ei-card"><h3>Data</h3><div class="ei-row">
     <button class="btn-sm" onclick="doExp()">\u{1F4E4} Export</button>
@@ -244,6 +268,14 @@ function rD(){
   const logged=dayLogged(day);
 
   let h=`<div class="nav"><button class="bk" onclick="view='home';resetForm();R()">\u{2190} Back</button><span class="nav-t">Day ${dn} \u{2022} ${fd(curDay)}</span><span style="width:40px"></span></div>`;
+
+  // Day type selector
+  h+=`<div style="display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap">`;
+  DAY_TYPES.forEach(dt=>{
+    const on=day.dayType===dt.id;
+    h+=`<button style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid ${on?dt.color:'var(--bdr)'};background:${on?dt.color+'20':'var(--bg)'};color:${on?dt.color:'var(--mut)'};cursor:pointer" onclick="setDayType('${dt.id}')">${dt.label}</button>`;
+  });
+  h+=`</div>`;
 
   // Gaps detection
   let gaps=[];
@@ -405,6 +437,31 @@ function rS(){
   });
   h+=`</div>`;
 
+  // By day type
+  const typedDays=data.days.filter(d=>d.dayType&&d.entries.length>0);
+  if(typedDays.length>0){
+    h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{1F4CB} By Day Type</h3>`;
+    DAY_TYPES.forEach(dt=>{
+      const days_=typedDays.filter(d=>d.dayType===dt.id);
+      if(!days_.length)return;
+      const allE=[];days_.forEach(d=>d.entries.forEach(e=>allE.push(e)));
+      const totalM=allE.reduce((s,e)=>s+e.end-e.start,0);
+      const withEn=allE.filter(e=>e.energy);
+      const avgEn=withEn.length?(withEn.reduce((s,e)=>s+e.energy,0)/withEn.length).toFixed(1):'--';
+      const workM=allE.filter(e=>e.cat==='work').reduce((s,e)=>s+e.end-e.start,0);
+      const funM=allE.filter(e=>e.cat==='fun').reduce((s,e)=>s+e.end-e.start,0);
+      const sleepM=allE.filter(e=>e.cat==='sleep').reduce((s,e)=>s+e.end-e.start,0);
+      h+=`<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--bdr)">
+        <div style="font-size:14px;font-weight:700;color:${dt.color};margin-bottom:6px">${dt.label} (${days_.length} day${days_.length>1?'s':''})</div>
+        <div class="srow"><span>Avg energy</span><span style="color:${parseFloat(avgEn)>=3?'var(--grn)':'var(--red)'}">${avgEn}/5</span></div>
+        <div class="srow"><span>Avg work</span><span>${durStr(Math.round(workM/days_.length))}/day</span></div>
+        <div class="srow"><span>Avg sleep</span><span>${durStr(Math.round(sleepM/days_.length))}/day</span></div>
+        <div class="srow"><span>Avg fun</span><span style="color:${funM/days_.length>=60?'var(--grn)':'var(--red)'}">${durStr(Math.round(funM/days_.length))}/day</span></div>
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+
   // Energy by category
   h+=`<div class="card"><h3 style="font-size:15px;font-weight:700;color:var(--wht);margin-bottom:12px">\u{26A1} Energy by Category</h3>`;
   sortedCats.forEach(([catId])=>{
@@ -454,6 +511,11 @@ function rS(){
 }
 
 // ===== ACTIONS =====
+function setDayType(typeId){
+  const day=getDay(curDay);if(!day)return;
+  day.dayType=day.dayType===typeId?null:typeId;
+  sv(data);R();
+}
 function saveEntry(){
   const noteEl=document.getElementById('formNote');
   if(noteEl)formNote=noteEl.value;
